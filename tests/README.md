@@ -5,7 +5,7 @@ These tests exercise the HX correctness checklist using the same shell-driven ha
 ## Requirements
 
 - A runnable HX server binary or start command.
-- Python 3 available on PATH (used for HTTP/WebSocket checks).
+- C compiler available on PATH (used to build the HTTP/WebSocket checks).
 
 ## Usage
 
@@ -26,6 +26,7 @@ HX_SERVER_CMD="./hx-server --port 8080" ./tests/run.sh
 - `HX_SERVER_ARGS`: Optional arguments appended to `HX_SERVER_BIN`.
 - `HX_HOST`: Host to bind against (default: `127.0.0.1`).
 - `HX_PORT`: Port to bind against (default: `8080`).
+- `HX_BUILD_DIR`: Output directory for test binaries (default: `/tmp/hx-tests`).
 
 ## What is tested
 
