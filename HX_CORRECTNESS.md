@@ -85,6 +85,7 @@ This checklist defines correctness for HX. A build should be considered **incomp
 - Copy produces expected clipboard contents.
 - Selection does not steal focus or input.
 - `Ctrl+C` is only intercepted by the app when input is focused and no text is selected.
+- Clipboard shortcuts (`Ctrl+C`, `Ctrl+V`, `Ctrl+X`) must follow browser defaults when selection is active.
 
 ## 6. Resource & failure correctness
 
@@ -187,11 +188,13 @@ sleep 100
 - Click inside the input and type `echo focus`.
 - Click in the output area and drag-select multiple lines.
 - Press `Ctrl+C` once with the selection active.
+- Press `Ctrl+V` with the selection active and confirm paste goes to the browser input only after refocusing it.
 
 **Expected:**
 - Input focus allows typing without lost characters.
 - Selection does not steal input permanently (clicking input restores typing).
 - `Ctrl+C` with a selection copies text and does not send `SIGINT`.
+- Clipboard shortcuts with selection active do not trigger shell input.
 
 ## F. Stress tests
 
