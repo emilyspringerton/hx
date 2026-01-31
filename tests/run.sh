@@ -42,7 +42,6 @@ pass_test "http_404"
 
 start_test "websocket_handshake"
 "$BUILD_DIR/test_ws_handshake" --host "$HX_HOST" --port "$HX_PORT" --path "/ws"
-
 pass_test "websocket_handshake"
 
 "$ROOT_DIR/tests/stop_server.sh"
