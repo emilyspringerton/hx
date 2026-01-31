@@ -2,6 +2,12 @@
 
 This checklist defines correctness for HX. A build should be considered **incomplete** if any item fails.
 
+## Scope & assumptions
+
+- Target environment: localhost development on Linux-like systems.
+- Security is intentionally minimal in V1; prioritize correctness and predictability.
+- Tests assume a browser with standard clipboard behavior (no custom keybindings).
+
 ## 1. Build & startup correctness
 
 **Build**
@@ -58,8 +64,8 @@ This checklist defines correctness for HX. A build should be considered **incomp
 **Interactive behavior**
 - `ls`, `pwd`, `cd` behave correctly.
 - `top`, `vi`, `less` run (even if ugly).
-- `Ctrl+C` in the shell sends `SIGINT` to the child.
-- `Ctrl+C` in the browser copies text (no `SIGINT`).
+- `Ctrl+C` **in the shell input** sends `SIGINT` to the child.
+- `Ctrl+C` **with selected text in the browser** copies text (no `SIGINT`).
 
 ## 5. Browser UX correctness
 
@@ -171,10 +177,21 @@ sleep 100
 ```
 
 **Expected:**
-- Pressing `Ctrl+C` in the browser copies text (no `SIGINT`).
-- Selecting output text and pressing `Ctrl+C` copies text without interrupting the shell.
+- With focus in the input and no selection, `Ctrl+C` sends `SIGINT` to the shell.
+- With output text selected, `Ctrl+C` copies text without interrupting the shell.
 
-## E. Stress tests
+## E. Focus & selection tests
+
+- Click inside the input and type `echo focus`.
+- Click in the output area and drag-select multiple lines.
+- Press `Ctrl+C` once with the selection active.
+
+**Expected:**
+- Input focus allows typing without lost characters.
+- Selection does not steal input permanently (clicking input restores typing).
+- `Ctrl+C` with a selection copies text and does not send `SIGINT`.
+
+## F. Stress tests
 
 **Output flood**
 ```sh
@@ -194,7 +211,7 @@ yes | head -n 5000
 - No FD leak.
 - Server remains stable.
 
-## F. Failure injection tests
+## G. Failure injection tests
 
 - Kill the shell process manually.
 - Disconnect the network (dev tools → offline).
@@ -205,8 +222,7 @@ yes | head -n 5000
 - Client gets a clean disconnect.
 - No undefined behavior.
 
-## G. Regression tests (later automation targets)
-
+## H. Regression tests (later automation targets)
 Automate once the baseline is stable:
 - WebSocket handshake test.
 - PTY lifecycle test.
