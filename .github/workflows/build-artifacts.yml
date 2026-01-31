@@ -1,0 +1,43 @@
+name: Build test artifacts
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build C99 test binaries
+        run: |
+          mkdir -p dist
+          cc -std=c99 -Wall -Wextra -O2 tests/test_http.c -o dist/test_http
+          cc -std=c99 -Wall -Wextra -O2 tests/test_ws_handshake.c -o dist/test_ws_handshake
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hx-tests-linux
+          path: dist/
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: mingw-w64-x86_64-gcc
+      - name: Build C99 test binaries (MinGW)
+        shell: msys2 {0}
+        run: |
+          mkdir -p dist
+          gcc -std=c99 -Wall -Wextra -O2 tests/test_http.c -lws2_32 -o dist/test_http.exe
+          gcc -std=c99 -Wall -Wextra -O2 tests/test_ws_handshake.c -lws2_32 -o dist/test_ws_handshake.exe
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hx-tests-windows
+          path: dist/

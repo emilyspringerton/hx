@@ -1,12 +1,22 @@
-#include <arpa/inet.h>
 #include <errno.h>
-#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+typedef SOCKET socket_t;
+#define close_socket closesocket
+#else
+#include <arpa/inet.h>
+#include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+typedef int socket_t;
+#define close_socket close
+#endif
 
 static const char base64_table[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -15,11 +25,11 @@ static void usage(const char *prog) {
     fprintf(stderr, "usage: %s --host HOST --port PORT --path PATH\n", prog);
 }
 
-static int connect_host(const char *host, const char *port) {
+static socket_t connect_host(const char *host, const char *port) {
     struct addrinfo hints;
     struct addrinfo *res = NULL;
     struct addrinfo *rp = NULL;
-    int sock = -1;
+    socket_t sock = (socket_t)-1;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
@@ -31,14 +41,14 @@ static int connect_host(const char *host, const char *port) {
 
     for (rp = res; rp != NULL; rp = rp->ai_next) {
         sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-        if (sock == -1) {
+        if (sock == (socket_t)-1) {
             continue;
         }
         if (connect(sock, rp->ai_addr, rp->ai_addrlen) == 0) {
             break;
         }
-        close(sock);
-        sock = -1;
+        close_socket(sock);
+        sock = (socket_t)-1;
     }
 
     freeaddrinfo(res);
@@ -255,9 +265,20 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    int sock = connect_host(host, port);
-    if (sock < 0) {
+#ifdef _WIN32
+    WSADATA wsa;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        fprintf(stderr, "failed to initialize winsock\n");
+        return 1;
+    }
+#endif
+
+    socket_t sock = connect_host(host, port);
+    if (sock == (socket_t)-1) {
         fprintf(stderr, "failed to connect to %s:%s\n", host, port);
+#ifdef _WIN32
+        WSACleanup();
+#endif
         return 1;
     }
 
@@ -277,20 +298,26 @@ int main(int argc, char **argv) {
                            path, host, port, key);
     if (req_len <= 0 || req_len >= (int)sizeof(request)) {
         fprintf(stderr, "request too long\n");
-        close(sock);
+#ifdef _WIN32
+        WSACleanup();
+#endif
+        close_socket(sock);
         return 1;
     }
 
-    if (send(sock, request, (size_t)req_len, 0) != req_len) {
+    if (send(sock, request, req_len, 0) != req_len) {
         perror("send");
-        close(sock);
+#ifdef _WIN32
+        WSACleanup();
+#endif
+        close_socket(sock);
         return 1;
     }
 
     char response[4096];
-    ssize_t total = 0;
+    int total = 0;
     while ((size_t)total < sizeof(response) - 1) {
-        ssize_t n = recv(sock, response + total, sizeof(response) - 1 - (size_t)total, 0);
+        int n = recv(sock, response + total, (int)(sizeof(response) - 1 - (size_t)total), 0);
         if (n <= 0) {
             break;
         }
@@ -300,7 +327,10 @@ int main(int argc, char **argv) {
         }
     }
     response[total] = '\0';
-    close(sock);
+    close_socket(sock);
+#ifdef _WIN32
+    WSACleanup();
+#endif
 
     if (strstr(response, "101") == NULL) {
         fprintf(stderr, "expected 101 response, got: %s\n", response);
