@@ -84,6 +84,7 @@ This checklist defines correctness for HX. A build should be considered **incomp
 - Text selection behaves like normal web text.
 - Copy produces expected clipboard contents.
 - Selection does not steal focus or input.
+- `Ctrl+C` is only intercepted by the app when input is focused and no text is selected.
 
 ## 6. Resource & failure correctness
 
@@ -110,6 +111,7 @@ These are first-class requirements.
 - No “smart” behavior that changes expectations.
 - Error messages explain what and why.
 - Nothing happens silently.
+- If a keybinding deviates from browser defaults, it is documented.
 
 If a human has to ask “why did that happen?”, correctness failed.
 
