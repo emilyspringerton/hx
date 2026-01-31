@@ -36,6 +36,7 @@ jobs:
         with:
           update: true
           install: mingw-w64-x86_64-gcc make
+
       - name: Build HX server (MinGW)
         shell: msys2 {0}
         run: |
