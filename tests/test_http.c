@@ -18,6 +18,7 @@ typedef int socket_t;
 #define close_socket close
 #endif
 
+
 static void usage(const char *prog) {
     fprintf(stderr, "usage: %s --host HOST --port PORT --path PATH --expect-status CODE\n", prog);
 }
@@ -92,6 +93,7 @@ int main(int argc, char **argv) {
 #ifdef _WIN32
         WSACleanup();
 #endif
+
         return 1;
     }
 
