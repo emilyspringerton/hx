@@ -228,6 +228,7 @@ yes | head -n 5000
 - No undefined behavior.
 
 ## H. Regression tests (later automation targets)
+
 Automate once the baseline is stable:
 - WebSocket handshake test.
 - PTY lifecycle test.
