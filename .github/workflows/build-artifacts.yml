@@ -1,0 +1,55 @@
+name: Build HX artifacts
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build HX server
+        run: |
+          if [ -f Makefile ]; then
+            make
+          fi
+          if [ -f "${HX_APP_BIN:-hx-server}" ]; then
+            mkdir -p dist
+            cp "${HX_APP_BIN:-hx-server}" dist/
+          else
+            echo "HX server binary not found; set HX_APP_BIN or add build steps." >&2
+          fi
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hx-server-linux
+          path: dist/
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: mingw-w64-x86_64-gcc make
+      - name: Build HX server (MinGW)
+        shell: msys2 {0}
+        run: |
+          if [ -f Makefile ]; then
+            make
+          fi
+          if [ -f "${HX_APP_BIN:-hx-server.exe}" ]; then
+            mkdir -p dist
+            cp "${HX_APP_BIN:-hx-server.exe}" dist/
+          else
+            echo "HX server binary not found; set HX_APP_BIN or add build steps." >&2
+          fi
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hx-server-windows
+          path: dist/
